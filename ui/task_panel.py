@@ -53,7 +53,7 @@ def render_task_panel(services):
             if task.acceptance_criteria:
                 st.write(f"**Acceptance:** {task.acceptance_criteria}")
             if task.error:
-                st.error(f"Error: {task.error}")
+                st.warning(f"Error: {task.error}")
 
             # Action buttons based on status
             _render_task_actions(services, task, i)
@@ -82,24 +82,30 @@ def _render_task_actions(services, task, task_idx):
         col1, col2 = st.columns(2)
         with col1:
             if st.button(f"✅ Accept All", key=f"accept_{task.id}", type="primary"):
-                result = workflow.accept_task_changes(project_id, task.id)
-                if result['success']:
-                    st.success(result['message'])
-                    if 'validation' in result:
-                        val = result['validation']
-                        if val['passed']:
-                            st.info(f"Validation: {val.get('summary', 'Passed')}")
-                        else:
-                            st.warning(f"Validation issues: {', '.join(val.get('errors', []))}")
-                else:
-                    st.error(result['message'])
-                    for c in result.get('conflicts', []):
-                        st.warning(f"{c['file']}: {c['message']}")
+                try:
+                    result = workflow.accept_task_changes(project_id, task.id)
+                    if result['success']:
+                        st.success(result['message'])
+                        if 'validation' in result:
+                            val = result['validation']
+                            if val['passed']:
+                                st.info(f"Validation: {val.get('summary', 'Passed')}")
+                            else:
+                                st.warning(f"Validation issues: {', '.join(val.get('errors', []))}")
+                    else:
+                        st.warning(result['message'])
+                        for c in result.get('conflicts', []):
+                            st.warning(f"{c['file']}: {c['message']}")
+                except Exception as e:
+                    st.warning(f"Could not accept changes: {e}")
                 st.rerun()
         with col2:
             if st.button(f"❌ Reject All", key=f"reject_{task.id}"):
-                result = workflow.reject_task_changes(project_id, task.id)
-                st.info(f"Rejected {len(result['rejected'])} changes.")
+                try:
+                    result = workflow.reject_task_changes(project_id, task.id)
+                    st.info(f"Rejected {len(result['rejected'])} changes.")
+                except Exception as e:
+                    st.warning(f"Could not reject changes: {e}")
                 st.rerun()
 
     elif task.status == 'failed':
@@ -108,19 +114,25 @@ def _render_task_actions(services, task, task_idx):
 
     elif task.status == 'running':
         if st.button(f"⏸️ Pause", key=f"pause_{task.id}"):
-            result = workflow.pause_task(project_id, task.id)
-            st.info(result['message'])
+            try:
+                result = workflow.pause_task(project_id, task.id)
+                st.info(result['message'])
+            except Exception as e:
+                st.warning(f"Could not pause task: {e}")
             st.rerun()
 
     elif task.status == 'paused':
         if st.button(f"▶️ Resume", key=f"resume_{task.id}"):
-            result = asyncio.run(workflow.resume_task(
-                project_id, plan_id, task.id, user_request, provider, model
-            ))
-            if result['success']:
-                st.success(result['message'])
-            else:
-                st.error(result.get('error', 'Resume failed'))
+            try:
+                result = asyncio.run(workflow.resume_task(
+                    project_id, plan_id, task.id, user_request, provider, model
+                ))
+                if result['success']:
+                    st.success(result['message'])
+                else:
+                    st.warning(result.get('error', 'Resume failed'))
+            except Exception as e:
+                st.warning(f"Could not resume task: {e}")
             st.rerun()
 
     elif task.status == 'completed':
@@ -145,7 +157,7 @@ def _execute_task(services, task, user_request, provider, model):
                 if 'category' in result and result['category'] == 'quota_exhaustured':
                     st.warning(f"Quota exhausted: {error}\n\nSwitch providers in the sidebar and retry.")
                 else:
-                    st.error(f"Task failed: {error}")
+                    st.warning(f"Task failed: {error}")
         except Exception as e:
-            st.error(f"Execution error: {e}")
+            st.warning(f"Execution error: {e}")
     st.rerun()

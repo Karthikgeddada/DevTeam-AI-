@@ -175,6 +175,10 @@ class DiffService:
         diffs = self.repo.get_diffs_for_project(project_id)
         return [d for d in diffs if d.status == 'proposed']
 
+    def get_diffs_for_project(self, project_id: str) -> List[DiffRecord]:
+        """Get all diffs for a project (any status)."""
+        return self.repo.get_diffs_for_project(project_id)
+
     def get_change_history(self, project_id: str, file_path: Optional[str] = None) -> List[DiffRecord]:
         """Get change history for a project, optionally filtered by file path."""
         diffs = self.repo.get_diffs_for_project(project_id)

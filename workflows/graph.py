@@ -50,6 +50,9 @@ class IncrementalWorkflow:
         task = self.services.task_service.get_task(task_id)
         if not task or task.project_id != project_id:
             return {'success': False, 'error': 'Task not found'}
+        # Retry path: failed -> pending -> running (failed -> running is not a valid transition)
+        if task.status == 'failed':
+            self.services.task_service.transition_task(task_id, 'pending')
         self.services.task_service.transition_task(task_id, 'running')
         try:
             files = self.services.project_service.list_files(project_id)
@@ -119,6 +122,11 @@ class IncrementalWorkflow:
         diffs = self.services.diff_service.get_pending_diffs(project_id)
         task_diffs = [d for d in diffs if d.task_id == task_id]
         if task_diffs:
+            # Use only valid transitions: failed->pending->running->awaiting_review
+            # or paused->running->awaiting_review (paused->awaiting_review is invalid)
+            if task.status == 'failed':
+                self.services.task_service.transition_task(task_id, 'pending')
+            self.services.task_service.transition_task(task_id, 'running')
             self.services.task_service.transition_task(task_id, 'awaiting_review')
             return {'success': True, 'message': 'Task has pending changes for review', 'diffs': [{'file_path': d.file_path, 'diff_id': d.id} for d in task_diffs]}
         return await self.execute_task(project_id, plan_id, task_id, user_request, provider_name, model)

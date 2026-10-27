@@ -11,12 +11,15 @@ def render_project_explorer(services):
         lang = st.selectbox("Language", ["python", "javascript", "typescript", "go", "rust"], key="new_project_lang")
         if st.button("Create", key="create_project_btn", type="primary"):
             if name:
-                project = services.project_service.create_project(name, desc, lang)
-                st.session_state.project_id = project.id
-                st.session_state.current_file = None
-                st.session_state.plan_id = None
-                st.success(f"Created project: {name}")
-                st.rerun()
+                try:
+                    project = services.project_service.create_project(name, desc, lang)
+                    st.session_state.project_id = project.id
+                    st.session_state.current_file = None
+                    st.session_state.plan_id = None
+                    st.success(f"Created project: {name}")
+                    st.rerun()
+                except Exception as e:
+                    st.warning(f"Could not create project: {e}")
             else:
                 st.warning("Please enter a project name.")
 
@@ -33,9 +36,12 @@ def render_project_explorer(services):
                     st.rerun()
             with col2:
                 if st.button("🗑", key=f"del_{p.id}", help="Delete project"):
-                    services.project_service.delete_project(p.id)
-                    if st.session_state.project_id == p.id:
-                        st.session_state.project_id = None
+                    try:
+                        services.project_service.delete_project(p.id)
+                        if st.session_state.project_id == p.id:
+                            st.session_state.project_id = None
+                    except Exception as e:
+                        st.warning(f"Could not delete project: {e}")
                     st.rerun()
 
         # Rename current project
@@ -45,7 +51,10 @@ def render_project_explorer(services):
                 with st.expander("✏️ Rename"):
                     new_name = st.text_input("New name", value=current.name, key="rename_input")
                     if st.button("Rename", key="rename_btn"):
-                        services.project_service.rename_project(current.id, new_name)
+                        try:
+                            services.project_service.rename_project(current.id, new_name)
+                        except Exception as e:
+                            st.warning(f"Could not rename project: {e}")
                         st.rerun()
     else:
         st.write("_No projects yet._")
@@ -63,7 +72,7 @@ def render_project_explorer(services):
                     st.success(f"Imported {len(files)} files")
                     st.rerun()
                 except Exception as e:
-                    st.error(f"Import failed: {e}")
+                    st.warning(f"Import failed: {e}")
 
             if st.button("Export as ZIP", key="export_btn"):
                 try:
@@ -75,7 +84,7 @@ def render_project_explorer(services):
                             mime='application/zip',
                         )
                 except Exception as e:
-                    st.error(f"Export failed: {e}")
+                    st.warning(f"Export failed: {e}")
 
         # File tree for current project
         st.divider()
@@ -110,9 +119,12 @@ def _render_file_tree(services):
                 st.rerun()
         with col3:
             if st.button("X", key=f"rm_{path}", help="Delete file"):
-                services.project_service.delete_file(st.session_state.project_id, path)
-                if st.session_state.current_file == path:
-                    st.session_state.current_file = None
+                try:
+                    services.project_service.delete_file(st.session_state.project_id, path)
+                    if st.session_state.current_file == path:
+                        st.session_state.current_file = None
+                except Exception as e:
+                    st.warning(f"Could not delete file: {e}")
                 st.rerun()
 
         # Inline rename form
@@ -131,7 +143,7 @@ def _render_file_tree(services):
                         st.success(f"Renamed to {new_name}")
                         st.rerun()
                     except Exception as e:
-                        st.error(f"Rename failed: {e}")
+                        st.warning(f"Rename failed: {e}")
             with col_rn_cancel:
                 if st.button("Cancel", key=f"rename_cancel_{path}"):
                     st.session_state.pop(f"renaming_{path}", None)
@@ -156,4 +168,4 @@ def _new_file_form(services):
             st.success(f"Created {file_path}")
             st.rerun()
         except Exception as e:
-            st.error(f"Failed to create file: {e}")
+            st.warning(f"Failed to create file: {e}")

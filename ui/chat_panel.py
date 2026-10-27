@@ -72,13 +72,13 @@ def _handle_chat(services, user_input: str):
             except ProviderError as e:
                 _handle_provider_error(e, services, project_id)
             except Exception as e:
-                st.error(f"Planning failed: {e}")
+                st.warning(f"Planning failed: {e}")
 
 
 def _handle_provider_error(error: ProviderError, services, project_id):
     """Handle provider errors with clear recovery instructions."""
     if error.category == ErrorCategory.AUTH_ERROR:
-        st.error(
+        st.warning(
             f"Authentication error: {error}\n\n"
             "Add your API key to `.streamlit/secrets.toml` and restart."
         )
@@ -94,4 +94,4 @@ def _handle_provider_error(error: ProviderError, services, project_id):
             "Please wait and try again. The request will be retried automatically."
         )
     else:
-        st.error(f"Provider error ({error.category.value}): {error}")
+        st.warning(f"Provider error ({error.category.value}): {error}")

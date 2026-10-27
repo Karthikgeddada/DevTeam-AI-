@@ -53,36 +53,46 @@ def _render_diff_list(services, diffs, mode):
                     st.write("**Proposed:**")
                     st.code(d.proposed_content[:2000], language='text')
 
-                # Accept/reject
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.button(f"✅ Accept", key=f"diff_accept_{d.id}"):
-                        success, msg, _ = services.diff_service.accept_diff_for_project(
-                            d.project_id, d.id
-                        )
-                        if success:
-                            st.success(msg)
-                        else:
-                            st.error(msg)
-                        st.rerun()
-                with col2:
-                    if st.button(f"❌ Reject", key=f"diff_reject_{d.id}"):
-                        success, msg = services.diff_service.reject_diff(
+                # Accept/reject (only in the Pending tab so element keys stay unique)
+                if mode == "pending":
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if st.button(f"✅ Accept", key=f"diff_accept_{d.id}"):
+                            try:
+                                success, msg, _ = services.diff_service.accept_diff_for_project(
+                                    d.project_id, d.id
+                                )
+                                if success:
+                                    st.success(msg)
+                                else:
+                                    st.warning(msg)
+                            except Exception as e:
+                                st.warning(f"Could not accept change: {e}")
+                            st.rerun()
+                    with col2:
+                        if st.button(f"❌ Reject", key=f"diff_reject_{d.id}"):
+                            try:
+                                success, msg = services.diff_service.reject_diff(
+                                    d.project_id, d.id
+                                )
+                                if success:
+                                    st.info(msg)
+                                else:
+                                    st.warning(msg)
+                            except Exception as e:
+                                st.warning(f"Could not reject change: {e}")
+                            st.rerun()
+
+            elif d.status == 'accepted' and mode == 'accepted':
+                if st.button(f"⏪ Revert", key=f"diff_revert_{d.id}"):
+                    try:
+                        success, msg = services.diff_service.revert_diff(
                             d.project_id, d.id
                         )
                         if success:
                             st.info(msg)
                         else:
-                            st.error(msg)
-                        st.rerun()
-
-            elif d.status == 'accepted':
-                if st.button(f"⏪ Revert", key=f"diff_revert_{d.id}"):
-                    success, msg = services.diff_service.revert_diff(
-                        d.project_id, d.id
-                    )
-                    if success:
-                        st.info(msg)
-                    else:
-                        st.error(msg)
+                            st.warning(msg)
+                    except Exception as e:
+                        st.warning(f"Could not revert change: {e}")
                     st.rerun()
