@@ -68,16 +68,20 @@ def render_code_editor(services):
                     st.success("File saved!")
                     st.rerun()
                 except Exception as e:
-                    st.error(f"Save failed: {e}")
+                    st.warning(f"Save failed: {e}")
+        def _cancel_edit(c=current_file):
+            st.session_state.unsaved_changes.pop(c, None)
+            st.session_state.edit_mode = False
+
         with col_cancel:
-            if st.button("↩️ Cancel", key="cancel_edit_btn"):
-                st.session_state.unsaved_changes.pop(current_file, None)
-                st.rerun()
+            st.button("↩️ Cancel", key="cancel_edit_btn", on_click=_cancel_edit)
     else:
         st.code(content, language=lang)
-        if st.button("✏️ Edit", key="edit_btn"):
-            st.session_state.unsaved_changes[current_file] = content
-            st.rerun()
+        def _enter_edit(c=current_file, ct=content):
+            st.session_state.unsaved_changes[c] = ct
+            st.session_state.edit_mode = True
+
+        st.button("✏️ Edit", key="edit_btn", on_click=_enter_edit)
 
 
 def _detect_language(path: str) -> str:

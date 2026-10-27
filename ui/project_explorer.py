@@ -5,7 +5,7 @@ from security.path_validator import is_safe_filename
 def render_project_explorer(services):
     """Sidebar project explorer: create, open, list, import/export."""
     # Create new project
-    with st.expander("➕ New Project", expanded=False):
+    with st.expander("➕ New Project", expanded=st.session_state.get("show_new_project", False)):
         name = st.text_input("Project Name", key="new_project_name")
         desc = st.text_input("Description", key="new_project_desc")
         lang = st.selectbox("Language", ["python", "javascript", "typescript", "go", "rust"], key="new_project_lang")
