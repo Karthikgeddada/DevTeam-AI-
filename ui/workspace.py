@@ -32,9 +32,9 @@ def render_workspace(services):
         st.warning(
             "⚠️ No LLM provider is configured. AI features will not work.\n\n"
             "Add your API key to Streamlit Secrets (`.streamlit/secrets.toml`):\n"
-            "```
-GEMINI_API_KEY = "your-key-here"
-```")
+            "```\n"
+            "GEMINI_API_KEY = \"your-key-here\"\n"
+            "```")
 
     # Main layout: two columns - left for editor/explorer, right for chat/tasks
     col_left, col_right = st.columns([3, 2], gap='small')
