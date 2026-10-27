@@ -94,9 +94,9 @@ class GeminiProvider(BaseProvider):
                 if role == "system" and not system_instruction:
                     system_instruction = text
                 elif role == "assistant":
-                    contents.append({"role": "model", "parts": [text]})
+                    contents.append({"role": "model", "parts": [{"text": text}]})
                 else:
-                    contents.append({"role": "user", "parts": [text]})
+                    contents.append({"role": "user", "parts": [{"text": text}]})
 
             config = {
                 "temperature": request.temperature,
@@ -151,9 +151,9 @@ class GeminiProvider(BaseProvider):
                 if role == "system" and not system_instruction:
                     system_instruction = text
                 elif role == "assistant":
-                    contents.append({"role": "model", "parts": [text]})
+                    contents.append({"role": "model", "parts": [{"text": text}]})
                 else:
-                    contents.append({"role": "user", "parts": [text]})
+                    contents.append({"role": "user", "parts": [{"text": text}]})
 
             config = {
                 "temperature": request.temperature,
